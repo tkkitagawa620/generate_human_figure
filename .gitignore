@@ -2,6 +2,7 @@
 /.vscode
 /__pycache__
 /.pylintrc
+/venv/**
 
 
 # Cpp extra files
