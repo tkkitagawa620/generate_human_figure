@@ -3,6 +3,7 @@
 /__pycache__
 /.pylintrc
 /venv/**
+/.cache/**
 
 
 # Cpp extra files

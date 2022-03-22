@@ -8,7 +8,7 @@ from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 
 img_path = "input.png"
-Path("out").mkdir(exist_ok=True)
+Path("imgs_output").mkdir(exist_ok=True)
 img = read_image(img_path, format="BGR")
 
 for i, config_path in enumerate(_ModelZooUrls.CONFIG_PATH_TO_URL_SUFFIX.keys()):
@@ -18,8 +18,8 @@ for i, config_path in enumerate(_ModelZooUrls.CONFIG_PATH_TO_URL_SUFFIX.keys()):
 
     # config設定
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file(config_path + ".yaml"))
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(config_path + ".yaml")
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-PanopticSegmentation/panoptic_fpn_R_101_3x.yaml"))
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-PanopticSegmentation/panoptic_fpn_R_101_3x.yaml")
     cfg.MODEL.DEVICE = 'cpu'
     score_thresh = 0.7
     cfg.MODEL.RETINANET.SCORE_THRESH_TEST = score_thresh
@@ -50,4 +50,4 @@ for i, config_path in enumerate(_ModelZooUrls.CONFIG_PATH_TO_URL_SUFFIX.keys()):
     # ファイル出力
     dataset_name, algorithm = config_path.split("/")
     algorithm = algorithm.split(".")[0]
-    vis_output.save(f"out/{i:02d}-{dataset_name}-{algorithm}.jpg")
+    vis_output.save(f"imgs_output/{i:02d}-{dataset_name}-{algorithm}.jpg")
