@@ -1,125 +1,103 @@
 # Contribution
 # https://github.com/KEDIARAHUL135/VanishingPoint
-import os
 import cv2
 import math
 import numpy as np
 
-# Threshold by which lines will be rejected wrt the horizontal
-REJECT_DEGREE_TH = 4.0
 
+class VanishingPointDetector():
+    def __init__(self, img):
+        self.img = img
+        self.lines = None
+        self.vp = None
 
-def ReadImage(InputImagePath):
-    Images = []
-    ImageNames = []
+        # Threshold by which lines will be rejected wrt the horizontal
+        self.REJECT_DEGREE_TH = 4.0
 
-    if os.path.isfile(InputImagePath):
-        InputImage = cv2.imread(InputImagePath)
+    def visualize(self):
+        if not self.lines:
+            print("Supporting lines not stored in the instance. use getVanishingPoint method first.")
+            exit(0)
+        img = self.img.copy()
+        for line in self.lines:
+            cv2.line(img, (line[0], line[1]), (line[2], line[3]), (0, 255, 0), 2)
+            cv2.circle(img, (int(self.vp[0]), int(self.vp[1])), 10, (0, 0, 255), -1)
+        cv2.imshow('Vanishing point and its supporting lines', img)
+        cv2.waitKey(0)
 
-        # Checking if image is read.
-        if InputImage is None:
-            print("Image not read. Provide a correct path")
-            exit()
+    def filterLines(self, lines):
+        result_lines = []
 
-        Images.append(InputImage)
-        ImageNames.append(os.path.basename(InputImagePath))
+        for line in lines:
+            [[x1, y1, x2, y2]] = line
 
-    elif os.path.isdir(InputImagePath):
+            if x1 != x2:
+                m = (y2 - y1) / (x2 - x1)
+            else:
+                m = 100000000
+            b = y2 - m * x2
+            # theta will contain values between -90 -> +90.
+            theta = math.degrees(math.atan(m))
 
-        for ImageName in os.listdir(InputImagePath):
+            # Rejecting lines of slope near to 0 degree or 90 degree and storing others
+            if self.REJECT_DEGREE_TH <= abs(theta) <= (90 - self.REJECT_DEGREE_TH):
+                ll = math.sqrt((y2 - y1)**2 + (x2 - x1)**2)    # length of the line
+                result_lines.append([x1, y1, x2, y2, m, b, ll])
 
-            InputImage = cv2.imread(InputImagePath + "/" + ImageName)
+        if len(result_lines) > 15:
+            result_lines = sorted(result_lines, key=lambda x: x[-1], reverse=True)
+            result_lines = result_lines[:15]
 
-            Images.append(InputImage)
-            ImageNames.append(ImageName)
+        return result_lines
 
-    else:
-        print("\nEnter valid Image Path.\n")
-        exit()
+    def getLines(self):
+        grayscale_img = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        blurred_img = cv2.GaussianBlur(grayscale_img, (5, 5), 1)
+        edge_img = cv2.Canny(blurred_img, 40, 255)
+        lines = cv2.HoughLinesP(edge_img, 1, np.pi / 180, 50, 10, 15)
 
-    return Images, ImageNames
+        if lines is None:
+            print("Not enough lines found in the image for Vanishing Point detection.")
+            exit(0)
 
+        lines = self.filterLines(lines)
+        self.lines = lines
 
-def FilterLines(Lines):
-    FinalLines = []
+        return lines
 
-    for Line in Lines:
-        [[x1, y1, x2, y2]] = Line
+    def getVanishingPoint(self):
+        vp = None
+        min_error = 100000000000
 
-        # Calculating equation of the line: y = mx + c
-        if x1 != x2:
-            m = (y2 - y1) / (x2 - x1)
-        else:
-            m = 100000000
-        c = y2 - m * x2
-        # theta will contain values between -90 -> +90.
-        theta = math.degrees(math.atan(m))
+        lines = self.getLines()
 
-        # Rejecting lines of slope near to 0 degree or 90 degree and storing others
-        if REJECT_DEGREE_TH <= abs(theta) <= (90 - REJECT_DEGREE_TH):
-            ll = math.sqrt((y2 - y1)**2 + (x2 - x1)**2)    # length of the line
-            FinalLines.append([x1, y1, x2, y2, m, c, ll])
+        for i in range(len(lines)):
+            for j in range(i + 1, len(lines)):
+                m1, b1 = lines[i][4], lines[i][5]
+                m2, b2 = lines[j][4], lines[j][5]
 
-    # Removing extra lines
-    # (we might get many lines, so we are going to take only longest 15 lines
-    # for further computation because more than this number of lines will only
-    # contribute towards slowing down of our algo.)
-    if len(FinalLines) > 15:
-        FinalLines = sorted(FinalLines, key=lambda x: x[-1], reverse=True)
-        FinalLines = FinalLines[:15]
+                if m1 != m2:
+                    x0 = (b1 - b2) / (m2 - m1)
+                    y0 = m1 * x0 + b1
 
-    return FinalLines
+                    err = 0
+                    for k in range(len(lines)):
+                        m, b = lines[k][4], lines[k][5]
+                        m_ = (-1 / m)
+                        b_ = y0 - m_ * x0
 
+                        x_ = (b - b_) / (m_ - m)
+                        y_ = m_ * x_ + b_
 
-def GetLines(Image):
-    GrayImage = cv2.cvtColor(Image, cv2.COLOR_BGR2GRAY)
-    BlurGrayImage = cv2.GaussianBlur(GrayImage, (5, 5), 1)
-    EdgeImage = cv2.Canny(BlurGrayImage, 40, 255)
-    Lines = cv2.HoughLinesP(EdgeImage, 1, np.pi / 180, 50, 10, 15)
+                        ll = math.sqrt((y_ - y0)**2 + (x_ - x0)**2)
 
-    if Lines is None:
-        print("Not enough lines found in the image for Vanishing Point detection.")
-        exit(0)
+                        err += ll**2
 
-    FilteredLines = FilterLines(Lines)
+                    err = math.sqrt(err)
 
-    return FilteredLines
+                    if min_error > err:
+                        min_error = err
+                        vp = [x0, y0]
 
-
-def GetVanishingPoint(Lines):
-    # We will apply RANSAC inspired algorithm for this. We will take combination
-    # of 2 lines one by one, find their intersection point, and calculate the
-    # total error(loss) of that point. Error of the point means root of sum of
-    # squares of distance of that point from each line.
-    VanishingPoint = None
-    MinError = 100000000000
-
-    for i in range(len(Lines)):
-        for j in range(i + 1, len(Lines)):
-            m1, c1 = Lines[i][4], Lines[i][5]
-            m2, c2 = Lines[j][4], Lines[j][5]
-
-            if m1 != m2:
-                x0 = (c1 - c2) / (m2 - m1)
-                y0 = m1 * x0 + c1
-
-                err = 0
-                for k in range(len(Lines)):
-                    m, c = Lines[k][4], Lines[k][5]
-                    m_ = (-1 / m)
-                    c_ = y0 - m_ * x0
-
-                    x_ = (c - c_) / (m_ - m)
-                    y_ = m_ * x_ + c_
-
-                    ll = math.sqrt((y_ - y0)**2 + (x_ - x0)**2)
-
-                    err += ll**2
-
-                err = math.sqrt(err)
-
-                if MinError > err:
-                    MinError = err
-                    VanishingPoint = [x0, y0]
-
-    return VanishingPoint
+        self.vp = vp
+        return vp
