@@ -72,7 +72,6 @@ class ScaleDetector():
         v_img = self.img.copy()
 
         # Step 1
-        print(self.rp)
         sp1 = self.findIntersection((self.rp, (0, self.rp_y)), (self.vp, tp))
         hl = self.getExtendedLine(v_img, self.rp, (0, self.rp_y))
         cv2.line(v_img, tuple(map(int, hl[0])), tuple(map(int, hl[1])), (255, 0, 0), 2)
@@ -95,7 +94,7 @@ class ScaleDetector():
 
         # Visualize the result
         self.drawHumanFigure(tp_x, tp_y, tp_h, (255, 0, 255))
-        # cv2.imshow('Human Scale', v_img)
-        # cv2.waitKey(0)
+        cv2.imshow('Human Scale', v_img)
+        cv2.waitKey(0)
 
         return tp_h

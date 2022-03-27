@@ -21,7 +21,6 @@ if __name__ == "__main__":
         if mask_img[y][x][0] == 255:
             positions.append((x, y))
             cv2.circle(img, (x, y), 10, (255, 255, 0), 2)
-    print(positions)
 
     rp = (420, 900)
     rh = 150
