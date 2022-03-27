@@ -7,8 +7,8 @@ class ScaleDetector():
         self.vp = vanishingPoint
         # Y and X cordinates of the reference figure origin
         self.rp = referencePoint
-        self.rp_x = rp[0]
-        self.rp_y = rp[1]
+        self.rp_x = referencePoint[0]
+        self.rp_y = referencePoint[1]
         self.rp_h = referenceHeight
         # Load image
         self.img = img
@@ -26,10 +26,10 @@ class ScaleDetector():
         rp = (x, y)
         _neckline_y = int((y - top_y) * 0.1429 + top_y)
 
-        cv2.line(img, rp, top, color, thickness)
-        cv2.line(img, (x - fig_w, top_y), (x + fig_w, top_y), color, thickness)
-        cv2.line(img, (x - fig_w, y), (x + fig_w, y), color, thickness)
-        cv2.line(img, (x - fig_w, _neckline_y), (x + fig_w, _neckline_y), color, thickness)
+        cv2.line(self.img, rp, top, color, thickness)
+        cv2.line(self.img, (x - fig_w, top_y), (x + fig_w, top_y), color, thickness)
+        cv2.line(self.img, (x - fig_w, y), (x + fig_w, y), color, thickness)
+        cv2.line(self.img, (x - fig_w, _neckline_y), (x + fig_w, _neckline_y), color, thickness)
         return None
 
     def drawVanishingPoint(self):
@@ -37,7 +37,7 @@ class ScaleDetector():
         return None
 
     def drawTargetPoint(self, tp):
-        cv2.circle(img, tuple(map(int, tp)), 5, (0, 0, 255), 4)
+        cv2.circle(self.img, tp, 5, (0, 0, 255), 4)
 
     def getExtendedLine(self, img, pt1, pt2):
         x1, y1 = pt1
@@ -64,7 +64,7 @@ class ScaleDetector():
         y_nume = (f * g - e * h) * (d - b) - (b * c - a * d) * (h - f)
         return (x_nume / x_deno, y_nume / y_deno)
 
-    def calculateFigureHeight(self, tp):
+    def drawScaledFigure(self, tp):
         # Init
         tp_x = tp[0]
         tp_y = tp[1]
@@ -95,50 +95,7 @@ class ScaleDetector():
 
         # Visualize the result
         self.drawHumanFigure(tp_x, tp_y, tp_h, (255, 0, 255))
-        cv2.imshow('Human Scale', v_img)
-        cv2.waitKey(0)
+        # cv2.imshow('Human Scale', v_img)
+        # cv2.waitKey(0)
 
         return tp_h
-
-
-vp = (597, 741)
-rp = (420, 900)
-tp = (620, 1250)
-reference_height = 150
-
-img_path = "imgs_input/karuizawa.jpg"
-img = cv2.imread(img_path)
-sd = ScaleDetector(img, vp, rp, reference_height)
-sd.drawHumanFigure()
-sd.drawVanishingPoint()
-sd.drawTargetPoint(tp)
-sd.calculateFigureHeight(tp)
-cv2.imshow('Human Scale', img)
-cv2.waitKey(0)
-
-
-# positions = []
-# while len(positions) < 3:
-#     y = random.randint(0, height)
-#     x = random.randint(0, width)
-#     if msk[y][x] == 255:
-#         positions.append((y, x))
-#         cv2.circle(img, (x, y), 10, (255, 255, 0), 2)
-#
-# cv2.imshow('Randomly generated location', img)
-# cv2.waitKey(0)
-#
-# src_pts = np.array([[0.0, 0.0], [1108.0, 0.0], [0, 1477], ], dtype=np.float32)
-# dst_pts = np.array([[30.0, 30.0], [1078.0, 30.0], [30.0, 1447.0]], dtype=np.float32)
-#
-# img_mark = img.copy()
-# for pt in src_pts:
-#     print(pt)
-#     cv2.drawMarker(img_mark, tuple(map(int, pt)), (0, 255, 0), thickness=4)
-# cv2.imshow('Mark affine anker', img)
-# cv2.waitKey(0)
-#
-# mat = cv2.getAffineTransform(src_pts, dst_pts)
-# affine_img = cv2.warpAffine(img, mat, (w, h))
-# cv2.imshow('Affine transfrom', affine_img)
-# cv2.waitKey(0)
