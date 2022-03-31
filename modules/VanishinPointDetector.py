@@ -20,9 +20,10 @@ class VanishingPointDetector():
             exit(0)
         img = self.img.copy()
         for line in self.lines:
-            cv2.line(img, (line[0], line[1]), (line[2], line[3]), (0, 255, 0), 2)
-            cv2.circle(img, (int(self.vp[0]), int(self.vp[1])), 10, (0, 0, 255), -1)
+            cv2.line(img, (line[0], line[1]), (line[2], line[3]), (0, 255, 0), 8)
+            cv2.circle(img, (int(self.vp[0]), int(self.vp[1])), 20, (0, 0, 255), -1)
         cv2.imshow('Vanishing point and its supporting lines', img)
+        # cv2.imwrite('karuizawa_module1.jpg', img)
         cv2.waitKey(0)
 
     def filterLines(self, lines):

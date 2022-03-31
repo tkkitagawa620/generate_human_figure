@@ -13,7 +13,7 @@ class ScaleDetector():
         # Load image
         self.img = img
 
-    def drawHumanFigure(self, x=None, y=None, h=None, color=None):
+    def drawHumanFigureLayout(self, x=None, y=None, h=None, color=None):
         x = x or self.rp_x
         y = y or self.rp_y
         h = h or self.rp_h

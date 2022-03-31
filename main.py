@@ -25,7 +25,7 @@ if __name__ == "__main__":
     rp = (420, 900)
     rh = 150
     sd = ScaleDetector(img, vp, rp, rh)
-    sd.drawHumanFigure()
+    # sd.drawHumanFigureLayout()
     sd.drawVanishingPoint()
     for pos in positions:
         sd.drawTargetPoint(pos)
