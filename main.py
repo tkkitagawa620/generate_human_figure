@@ -12,23 +12,19 @@ if __name__ == "__main__":
 
     vpd = VanishingPointDetector(img)
     vp = vpd.getVanishingPoint()
-    # vpd.visualize()
+    vpd.visualize()
 
     positions = []
-    while len(positions) < 3:
+    while len(positions) < 5:
         y = random.randint(0, h - 1)
         x = random.randint(0, w - 1)
         if mask_img[y][x][0] == 255:
             positions.append((x, y))
-            cv2.circle(img, (x, y), 10, (255, 255, 0), 2)
 
     rp = (420, 900)
     rh = 150
     sd = ScaleDetector(img, vp, rp, rh)
-    # sd.drawHumanFigureLayout()
-    sd.drawVanishingPoint()
     for pos in positions:
-        sd.drawTargetPoint(pos)
         sd.drawScaledFigure(pos)
     cv2.imshow('result', sd.img)
     cv2.waitKey(0)

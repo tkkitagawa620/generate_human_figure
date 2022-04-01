@@ -1,3 +1,5 @@
+import glob
+import random
 import cv2
 
 
@@ -93,8 +95,38 @@ class ScaleDetector():
         cv2.circle(v_img, (tp_x, tp_top_y), 4, (0, 255, 0), 4)
 
         # Visualize the result
-        self.drawHumanFigure(tp_x, tp_y, tp_h, (255, 0, 255))
-        cv2.imshow('Human Scale', v_img)
-        cv2.waitKey(0)
+        img_paths = glob.glob('./imgs_figures/*.png')
+        img = random.choice(img_paths)
+        print('Image path: ', img)
+        fig = cv2.imread(img, -1)
+        self.drawHumanFigure(fig, tp_x, tp_y, tp_h)
 
         return tp_h
+
+    def drawHumanFigure(self, img, x, y, h):
+        alpha_img = img.copy()
+        alpha_img_h, alpha_img_w = alpha_img.shape[:2]
+        alpha_img_h, alpha_img_w = h, int(alpha_img_w * (h / alpha_img_h))
+        alpha_img = cv2.resize(alpha_img, (alpha_img_w, alpha_img_h))
+
+        x1 = int(x - (alpha_img_w / 2))
+        y1 = int(y - h)
+
+        self.img = self.merge_images(self.img, alpha_img, x1, y1)
+
+    def merge_images(self, bg, fg_alpha, s_x, s_y):
+        alpha = fg_alpha[:, :, 3]
+        alpha = cv2.cvtColor(alpha, cv2.COLOR_GRAY2BGR)
+        alpha = 0.8 * alpha / 255.0
+
+        fg = fg_alpha[:, :, :3]
+
+        f_h, f_w, _ = fg.shape
+        b_h, b_w, _ = bg.shape
+
+        print("f_w:{} f_h:{} b_w:{} b_h:{} s({}, {})".format(f_w, f_h, b_w, b_h, s_x, s_y))
+
+        bg[s_y:f_h + s_y, s_x:f_w + s_x] = (bg[s_y:f_h + s_y, s_x:f_w + s_x] * (1.0 - alpha)).astype('uint8')
+        bg[s_y:f_h + s_y, s_x:f_w + s_x] = (bg[s_y:f_h + s_y, s_x:f_w + s_x] + (fg * alpha)).astype('uint8')
+
+        return bg
