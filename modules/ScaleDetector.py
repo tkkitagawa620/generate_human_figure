@@ -97,7 +97,6 @@ class ScaleDetector():
         # Visualize the result
         img_paths = glob.glob('./imgs_figures/*.png')
         img = random.choice(img_paths)
-        print('Image path: ', img)
         fig = cv2.imread(img, -1)
         self.drawHumanFigure(fig, tp_x, tp_y, tp_h)
 
@@ -109,10 +108,34 @@ class ScaleDetector():
         alpha_img_h, alpha_img_w = h, int(alpha_img_w * (h / alpha_img_h))
         alpha_img = cv2.resize(alpha_img, (alpha_img_w, alpha_img_h))
 
-        x1 = int(x - (alpha_img_w / 2))
-        y1 = int(y - h)
+        offset_x = int(x - alpha_img_w / 2)
+        offset_y = y - h
 
-        self.img = self.merge_images(self.img, alpha_img, x1, y1)
+        # When offset x position of the figure is negative
+        if offset_x < 0:
+            visible_width = alpha_img_w + offset_x
+            # Cropping image: img[top : bottom, left : right]
+            alpha_img = alpha_img[0: alpha_img_h, offset_x: alpha_img_w]
+            # Update offset and width
+            alpha_img_w = visible_width
+            offset_x = 0
+        # When offset position of the figure exceeds input image size
+        if alpha_img_w + offset_x > self.img.shape[1]:
+            visible_width = self.img.shape[1] - offset_x
+            # Cropping image: img[top : bottom, left : right]
+            alpha_img = alpha_img[0: alpha_img_h, 0: visible_width]
+            # Update width
+            alpha_img_w = visible_width
+        # When offset y position of the figure is negative
+        if offset_y < 0:
+            visible_height = alpha_img_h + offset_y
+            # Crop image: img[top : bottom, left : right]
+            alpha_img = alpha_img[alpha_img_h - visible_height: alpha_img_h, 0: alpha_img_w]
+            # Update offset and height
+            alpha_img_h = visible_height
+            offset_y = 0
+
+        self.img = self.merge_images(self.img, alpha_img, offset_x, offset_y)
 
     def merge_images(self, bg, fg_alpha, s_x, s_y):
         alpha = fg_alpha[:, :, 3]

@@ -12,10 +12,10 @@ if __name__ == "__main__":
 
     vpd = VanishingPointDetector(img)
     vp = vpd.getVanishingPoint()
-    vpd.visualize()
+    # vpd.visualize()
 
     positions = []
-    while len(positions) < 5:
+    while len(positions) < 8:
         y = random.randint(0, h - 1)
         x = random.randint(0, w - 1)
         if mask_img[y][x][0] == 255:
